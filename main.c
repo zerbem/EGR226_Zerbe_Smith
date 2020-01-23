@@ -13,7 +13,10 @@
 #include <string.h>
 
 
-
+/******************
+*Creation of the structure that will be used as the database for the .csv
+    file to be read and parsed.
+******************/
 typedef struct{
 char title[256];
 char author_name[51];
@@ -85,9 +88,19 @@ int main()
 }
 
 void parse_file(book_struct book_array[])
+/****************************************
+*Brief:     This CF opens the books.csv file and then uses strtok() to
+                seperate each useful bit (title, author, ISBN, etc) into its
+                appropriate sub-structure. It tokenizes based on commas and new lines.
+*Params:
+            book_struct book_array[]:   array with defined sub-structures,
+                                            holds the book's information for later searches.
+*Returns:   void pointer return:        Function allows manipulation of book_array and
+                                            returns it as a pointer.
+****************************************/
 {
-    FILE *fpin;
-    char buffer[512];
+    FILE *fpin; //pin to open file
+    char buffer[512]; //buffer to save each line to
     int i=0;
 
     if((fpin=fopen("books.csv","r"))==NULL){
@@ -95,10 +108,10 @@ void parse_file(book_struct book_array[])
         exit(1);
     }
 
-    while(fgets(buffer, 512, fpin)){
-        char *ptr = strtok(buffer,",");
+    while(fgets(buffer, 512, fpin)){ //read in each file
+        char *ptr = strtok(buffer,","); //tokenize a line by commas
         if(strcmp(ptr,"N/A")){
-            strcpy(book_array[i].title,ptr);
+            strcpy(book_array[i].title,ptr); //save the title name into the correct sub-structure
         }
         ptr=strtok(NULL,",\n");
         if(strcmp(ptr,"N/A")){
@@ -110,22 +123,29 @@ void parse_file(book_struct book_array[])
         }
         ptr=strtok(NULL,",\n");
         if(strcmp(ptr,"N/A")){
-            book_array[i].pages=atoi(ptr);
-        }
+            book_array[i].pages=atoi(ptr); //since buffer is char, ptr must be returned to int for proper
+        }                                       //saving into sub-structure int pages
         ptr=strtok(NULL,",\n");
         if(strcmp(ptr,"N/A")){
             book_array[i].year_pub=atoi(ptr);
         }
         i++;
     }
-    fclose(fpin);
+    fclose(fpin); //close the file
 }
 
 void print_book(book_struct book_array[], int i)
+/***********************************************
+*Brief:     Prints the Ith book's information to the serial monitor.
+*Params:
+            book_struct book_array[]:   allows the function to print the any books information
+            int i:  Tells the CF which book in the array to print.
+*Returns:   void
+***********************************************/
 {
 
     printf("Title: ");
-    puts(book_array[i].title);
+    puts(book_array[i].title); //printing of a string
     printf("\n");
 
     printf("Author: ");
@@ -136,7 +156,7 @@ void print_book(book_struct book_array[], int i)
     puts(book_array[i].ISBN);
     printf("\n");
 
-    printf("# of Pages: %d\n", book_array[i].pages);
+    printf("# of Pages: %d\n", book_array[i].pages); //printing of an integer
 
     printf("Year published: %d\n\n", book_array[i].year_pub);
 
@@ -144,6 +164,13 @@ void print_book(book_struct book_array[], int i)
 }
 
 void search_title(book_struct book_array[], char Stitle[])
+/*********************************************************
+*Brief:     CF to search all titles held in the substructure .title for a provided string
+*Params:
+            book_struct book_array[]:   allows the function to print the any books information
+            char Stitle[]:  The user's desired search string
+*Returns:   void
+*********************************************************/
 {
     int i=0;
     while(i<=360){
@@ -154,6 +181,13 @@ void search_title(book_struct book_array[], char Stitle[])
     }
 }
 void search_ISBN(book_struct book_array[], char SISBN[])
+/*********************************************************
+*Brief:     CF to search all ISBNs held in the substructure .ISBN for a provided string
+*Params:
+            book_struct book_array[]:   allows the function to print the any books information
+            char SISBN[]:  The user's desired search string
+*Returns:   void
+*********************************************************/
 {
     int i=0;
     while(i<=360){
@@ -164,6 +198,13 @@ void search_ISBN(book_struct book_array[], char SISBN[])
     }
 }
 void search_author(book_struct book_array[], char author[])
+/*********************************************************
+*Brief:     CF to search all authors held in the substructure .author_name for a provided string
+*Params:
+            book_struct book_array[]:   allows the function to print the any books information
+            char author[]:  The user's desired search string
+*Returns:   void
+*********************************************************/
 {
     int i=0;
     while(i<=360){
