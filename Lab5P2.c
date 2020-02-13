@@ -1,8 +1,16 @@
 #include "msp.h"
 
 
-/**
- * main.c
+/*
+ * Name:        Marshall Zerbe, Micheal Smith
+ * Course:      EGR 226-901
+ * Project:     Lab 5- external connections
+ * File:        Lab5P2.c
+ * Description: Connects the MSP432 to three colored LEDs
+ *                  activated through MOSFET 2N7000 transistor.
+ *                  A button press will move the code forward onto
+ *                  the next color. A button hold will continuously cycle
+ *                  colors in 1 second intervals delayed by a systick timer.
  */
 
 int debounceSwitch1();
@@ -55,6 +63,15 @@ void main(void)
 }
     int debounceSwitch1()
     {
+        /**********************************
+         * Brief:   debounces button 1 using systick_delay().
+         *             Allows the button to be held for a continuous loop.
+         * Params:
+         *          VOID
+         * Returns:
+         *          int switchValue: Flag to verify if the button
+         *                              was pressed.
+         */
             int switchValue=0; //Switch is on until pressed
 
             while((P1IN & 0x80)==0); //while button is not pressed
@@ -71,6 +88,14 @@ void main(void)
         }
     void port1_7_init()
     {
+        /***********************
+         * Brief:   Initializes P1.7 as an input with the internal
+         *              resistor pulled down.
+         * Params:
+         *          VOID
+         * Returns:
+         *          VOID
+         */
         P1->SEL0 &= ~0x80;
         P1->SEL1 &= ~0x80;
         P1->DIR &= ~0x80; //make 1.7 input
@@ -79,6 +104,13 @@ void main(void)
     }
     void port2_0_init()
     {
+        /***********************
+         * Brief:   Initializes P2.0 as an output set to zero.
+         * Params:
+         *          VOID
+         * Returns:
+         *          VOID
+         */
         P2->SEL0 &= ~0x01; //clearing P2.0 SEL0 register for GPIO
         P2->SEL1 &= ~0x01; //clearing P2.0 SEL1 register for GPIO
         P2->DIR |= 0x01;  //set P2.0 DIR register for output
@@ -86,6 +118,13 @@ void main(void)
     }
     void port2_1_init()
     {
+        /***********************
+         * Brief:   Initializes P2.1 as an output set to zero.
+         * Params:
+         *          VOID
+         * Returns:
+         *          VOID
+         */
         P2->SEL0 &= ~0x02; //clearing P2.1 SEL0 register for GPIO
         P2->SEL1 &= ~0x02; //clearing P2.1 SEL1 register for GPIO
         P2->DIR |= 0x02;  //set P2.1 DIR register for output
@@ -93,6 +132,13 @@ void main(void)
     }
     void port2_2_init()
     {
+        /***********************
+         * Brief:   Initializes P2.2 as an output set to zero.
+         * Params:
+         *          VOID
+         * Returns:
+         *          VOID
+         */
         P2->SEL0 &= ~0x04; //clearing P2.2 SEL0 register for GPIO
         P2->SEL1 &= ~0x04; //clearing P2.2 SEL1 register for GPIO
         P2->DIR |= 0x04;  //set P2.2 DIR register for output
@@ -100,6 +146,13 @@ void main(void)
     }
     void systick_init()
     {
+        /**********************
+         * Brief:   initializes the systick timer.
+         * Params:
+         *          VOID
+         * Returns:
+         *          VOID
+         */
         SysTick->CTRL = 0x00;
         SysTick->LOAD = 0x00FFFFFF;//15000 cycles
         SysTick->VAL = 0x00;
@@ -107,6 +160,15 @@ void main(void)
     }
     void systick_delay(uint16_t delaymS)
     {
+        /**********************
+         * Brief:   A delay function that uses the systick timer
+         *              clocked with the 3 MHz master clock.
+         * Params:
+         *          uint16_t delaymS:   amount of miliseconds to
+         *                                  delay for.
+         * Returns:
+         *          VOID
+         */
         SysTick->LOAD = ((delaymS * 3000)-1);
         SysTick->VAL = 0;
         while((SysTick->CTRL & 0x00010000)==0);
