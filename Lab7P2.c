@@ -1,3 +1,11 @@
+
+/*
+ * Name:        Marshall Zerbe, Micheal Smith
+ * Course:      EGR 226-901
+ * Project:     Lab 7- LCD interfacing
+ * File:        Lab7P1.c
+ * Description: Prints 4 lines worth of information onto the LCD.
+ */
 #include "msp.h"
 
 #define RS 1         //4.0 mask
@@ -91,6 +99,15 @@ void main(void)
 
 void LCD_init()
 {
+    /*************************************
+     * Brief:   Initializes the LCD to 4 bit bus width, basic font,
+     *              cursor returned to home and the displayed cleared
+     *              with a blinking cursor.
+     * Params:
+     *          void
+     * Returns:
+     *          void
+     */
     P4->DIR = 0xFF;
     systick_delay(30);
     nibble_write(0x30, 0);
@@ -109,6 +126,14 @@ void LCD_init()
 }
 void nibble_write(unsigned char data, unsigned char control)
 {
+    /*********************************************
+     * Brief:   Takes in a 16 bit data set, then sends the upper 4 bits through D4-7.
+     * Params:
+     *          Unsigned char data:     actual info needing to reach LCD
+     *          Unsigned char control:  Tells LCD if info is data or command
+     * Returns:
+     *          void
+     */
     data &= 0xF0;
     control &=0x0F;
     P4->OUT = data | control;
@@ -119,14 +144,28 @@ void nibble_write(unsigned char data, unsigned char control)
 }
 void commandWrite(unsigned char command)
 {
+    /*********************************************
+     * Brief:   Sends commands to the LCD using nibble_write
+     * Params:
+     *          unsigned char command:  the 16 bit command to implement on the LCD
+     * Returns:
+     *          void
+     */
     nibble_write(command & 0xF0, 0);
     nibble_write(command << 4, 0);
     systick_delay(4);
 }
 void dataWrite(unsigned char data)
 {
-    nibble_write(data & 0xF0, RS);
-    nibble_write(data << 4, RS);
+    /********************************************
+     * Brief:   Sends data using nibble_write
+     * Params:
+     *          unsigned char data: 16 bit info to be sent
+     * Returns:
+     *          void
+     */
+    nibble_write(data & 0xF0, RS);      //Tells RS to be 0 to signal incomeing command, sends upper 4 bits
+    nibble_write(data << 4, RS);        //RS = 0 and sends lower 4 bits
     systick_delay(1);
 }
 void systick_init()
