@@ -3,7 +3,7 @@
  * Name:        Marshall Zerbe, Micheal Smith
  * Course:      EGR 226-901
  * Project:     Lab 9- Interupts via GPIO and timers
- * File:        Lab8P1.c
+ * File:        Lab9P1.c
  * Description: Creates a PWM signal to a DC motor using TimerA0 dutycycle
  *                  and three pushbuttons connected to pins that trigger an ISR
  *                  when they go low.
