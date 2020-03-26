@@ -1,5 +1,6 @@
 #include "msp.h"
 #include "stdio.h"
+#include "math.h"
 
 #define RS 1         //4.0 mask
 #define EN 4         //4.2 mask
@@ -19,7 +20,7 @@ void systick_delay(uint16_t delayms);
 
 uint8_t tempC;
 float tempF;
-
+char buffer[5];
 
 
 void main(void)
@@ -70,8 +71,11 @@ void main(void)
         while(!ADC14->IFGR0);                           //while the flag is not set
         tempC = (ADC14->MEM[5])* .02 - 50;              //save value from memory into C
         tempF = (tempC * 1.8) + 32;                     //convert C into F
-        commandWrite(0xC7);
-        dataWrite();
+        sprintf(buffer,"%d",tempC);
+        commandWrite(0xC5);
+        for(i=0;i<1;i++){
+        dataWrite(buffer[i]);
+        }
         dataWrite(0xDF);
         dataWrite('C');
         systick_delay(5000);                               //delay to make it print every half second
