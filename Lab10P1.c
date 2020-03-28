@@ -1,3 +1,13 @@
+/*
+ * Name:        Marshall Zerbe, Micheal Smith
+ * Course:      EGR 226-901
+ * Project:     Lab 10 - ADC peripheral and analog sensors
+ * File:        Lab10P1.c
+ * Description: Interfaces the on-board ADC with a potentiometer
+ *                  and prints the corrosponding voltage reading
+ *                  to the console.
+ */
+
 #include "msp.h"
 #include "stdio.h"
 
@@ -29,6 +39,13 @@ void main(void)
 }
 void ADCsetup()
 {
+    /**********************
+     * Brief:   initializes the ADC with A0 and MEM 5 selected.
+     * Params:
+     *          VOID
+     * Returns:
+     *          VOID
+     */
     ADC14->CTL0 =   0x10;                   //POWERED ON BUT DISABLED
     ADC14->CTL0 |=  0X04D80300;             //S/H MODE, MCLCK, 32 SAMPLE CLOCK, SW TRIG, 4 DIVISOR
     ADC14->CTL1 =   0X00000030;             //14 BIT RESOLUTION
@@ -38,6 +55,13 @@ void ADCsetup()
 }
 void port5_5_init()
 {
+    /**********************
+     * Brief:   initializes port 5.5 to be used as the ADC pin
+     * Params:
+     *          VOID
+     * Returns:
+     *          VOID
+     */
     P5->SEL0 |= 0X20;                       //SET SEL0 AND SEL1 TO ENABLE ADC THROUGH A0.
     P5->SEL1 |= 0X20;                       //REFER TO PAGE 35 FOR TABLE
 }

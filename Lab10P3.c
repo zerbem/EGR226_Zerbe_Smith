@@ -1,6 +1,16 @@
+/*
+ * Name:        Marshall Zerbe, Micheal Smith
+ * Course:      EGR 226-901
+ * Project:     Lab 10 - ADC peripheral and analog sensors
+ * File:        Lab10P3.c
+ * Description: Interfaces the on-board ADC with an external
+ *                  temperature sensor, and prints the ambient
+ *                  temperature to an LCD in either Celsius or Fehrenheit.
+ *                  Selectable via push button caused interrupts.
+ */
+
 #include "msp.h"
 #include "stdio.h"
-#include "math.h"
 
 #define RS 1         //4.0 mask
 #define EN 4         //4.2 mask
@@ -17,30 +27,36 @@ void ADCsetup();
 void port5_5_init();
 void systick_init();
 void systick_delay(uint16_t delayms);
+void inttochar(int tempC);
+void PORT3_IRQHandler();
+void port3_init();
 
-uint8_t tempC;
-float tempF;
-char buffer[5];
+uint8_t tempC, push=1;                  //Variable to save the ADC conversion into and flag for interrupts respectively
+float tempF;                            //Variable to save the fehrenheit conversion
+char TEMPC[3], TEMPF[3];                //arrays used to print to the LCD
+
 
 
 void main(void)
 {
     int i;
 
-    ADCsetup();
+    ADCsetup();                         //initializations
     port4_init();
     port5_5_init();
     systick_init();
     LCD_init();
+    port3_init();
 
     WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;     // stop watchdog timer
 
-    NVIC_EnableIRQ(ADC14_IRQn);
+    NVIC_EnableIRQ(ADC14_IRQn);          //enabling interrupts
+    NVIC_EnableIRQ(PORT3_IRQn);
     __enable_interrupt();
 
 
 
-    line1[0] = 'C';
+    line1[0] = 'C';                      //mandatory LCD first line print out
     line1[1] = 'u';
     line1[2] = 'r';
     line1[3] = 'r';
@@ -61,7 +77,7 @@ void main(void)
         commandWrite(1);
         systick_delay(500);
 
-        commandWrite(0x80);
+        commandWrite(0x80);                             //printing out line1[]
         for(i=0;i<16;i++)
         {
             dataWrite(line1[i]);
@@ -71,21 +87,46 @@ void main(void)
         while(!ADC14->IFGR0);                           //while the flag is not set
         tempC = (ADC14->MEM[5])* .02 - 50;              //save value from memory into C
         tempF = (tempC * 1.8) + 32;                     //convert C into F
-        sprintf(buffer,"%d",tempC);
-        commandWrite(0xC5);
-        for(i=0;i<1;i++){
-        dataWrite(buffer[i]);
+
+        sprintf(TEMPC, "%.1f",tempC);                   //convert the variables into LCD printable char arrays
+        sprintf(TEMPF, "%.1f",tempF);
+        commandWrite(0xC7);
+
+    if(push == 1){                                      //checking which button was pushed
+        for(i=0;i<=3;i++){                              //printing the TEMPC array
+            dataWrite(TEMPC[i]);
+        }
+
+        dataWrite(0xDF);                                //degree symbol
+        dataWrite('C');
+
+    }
+
+    if(push == 2){
+        for(i=0;i<=3;i++){                              //printing the TEMPF array
+            dataWrite(TEMPF[i]);
         }
         dataWrite(0xDF);
-        dataWrite('C');
-        systick_delay(5000);                               //delay to make it print every half second
+        dataWrite('F');
+    }
 
+        systick_delay(5000);                            //5 second delay of the LCD to improve legibility of the LCD
+
+      /*  commandWrite(0x1F);
+        */
     }
 }
 
+
 void ADCsetup()
 {
-
+    /**********************
+     * Brief:   initializes the ADC with A0 and MEM 5 selected.
+     * Params:
+     *          VOID
+     * Returns:
+     *          VOID
+     */
     ADC14->CTL0 =   0x10;                   //POWERED ON BUT DISABLED
     ADC14->CTL0 |=  0X04D80300;             //S/H MODE, MCLCK, 32 SAMPLE CLOCK, SW TRIG, 4 DIVISOR
     ADC14->CTL1 =   0X00000030;             //14 BIT RESOLUTION
@@ -95,13 +136,19 @@ void ADCsetup()
 }
 void port5_5_init()
 {
+    /**********************
+     * Brief:   initializes port 5.5 to be used as the ADC pin
+     * Params:
+     *          VOID
+     * Returns:
+     *          VOID
+     */
     P5->SEL0 |= 0X20;                       //SET SEL0 AND SEL1 TO ENABLE ADC THROUGH A0.
     P5->SEL1 |= 0X20;                       //REFER TO PAGE 35 FOR TABLE
 }
 void systick_init()
 {
     /**********************
-
      * Brief:   initializes the systick timer.
      * Params:
      *          VOID
@@ -212,4 +259,50 @@ void port4_init()
     P4->SEL1 &= 0x00;
     P4->DIR  |= 0xFF;           //Set all to outputs
     P4->OUT  &= 0x00;           //Clear all output values
+}
+
+
+void port3_init()
+{
+    /**********************
+     * Brief:   Initializes P3.5,6 as inputs with the internal resistor
+     *              pulled up, and interrupts enabled at the falling edge
+     * Params:
+     *          void
+     * Returns:
+     *          VOID
+     */
+    P3->SEL0    &= ~0x60;       //Clear both SEL for 3.5,6
+    P3->SEL1    &= ~0x60;
+    P3->DIR     &= ~0x60;       //Clear to input
+    P3->REN     |=  0x60;       //Enable resistors
+    P3->OUT     |=  0x60;       //Set to pull-up
+    P3->IES     |=  0x60;       //Set to falling edge i.e notice when low
+    P3->IE      |=  0x60;       //Enable interupts for 3.5,6,7
+    P3->IFG     =   0;          //Clear interupt flags
+}
+void PORT3_IRQHandler()         //Port 3 ISR
+{
+    /**********************
+     * Brief:   ISR for port 3. Checks what pin triggered the interrupt
+     *              and changes a global variable accordingly. Resets the IFG
+     * Params:
+     *          volatile uint8_t bFlag:     global flag changed accordingly
+     * Returns:
+     *          VOID
+     */
+    if(P3->IFG & 0x20){
+        systick_delay(5);                   //debounce routine
+        if((P3->IN & 0x20) == 0x00)
+            push=1;
+            P3->IFG &= ~0x20;
+
+    }
+    if(P3->IFG & 0x40){
+        systick_delay(5);                   //debounce routine
+        if((P3->IN & 0x40) == 0x00)         //if pin still low
+        push = 2;
+        P3->IFG &= ~0x40;
+    }
+
 }
