@@ -26,15 +26,16 @@ void main(void)
     port4_0_init();
     port2_4_init();
 
-    NVIC->ISER[0]=1<<((TA0_0_IRQn)&31);
+    NVIC_EnableIRQ(TA0_N_IRQn);
     __enable_irq();                                 //global interrupt enabled
     WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
 while(1){
     if(detect10Hz){
-        P4->OUT |= 0x01;
-        P4->OUT &= ~0x01;
+        P4->OUT ^= 0x01;
+
+        detect10Hz=0;
     }
-}
+    }
 }
 void timerA0_init()
 {
@@ -52,11 +53,11 @@ void timerA0_init()
     TIMER_A0->CTL    |= TIMER_A_CTL_ID_3;            // x/8, 375KHz
     TIMER_A0->CTL    |= TIMER_A_CTL_CLR;             //clear TA0R
 
-    TIMER_A0->CCTL[2] = TIMER_A_CCTLN_CM_1;          //Capture rising edge
-    TIMER_A0->CCTL[2] = TIMER_A_CCTLN_CCIS_0;        //CCI2A
-    TIMER_A0->CCTL[2] = TIMER_A_CCTLN_CCIE;          //Capture interrupt
-    TIMER_A0->CCTL[2] = TIMER_A_CCTLN_CAP;           //capture mode
-    TIMER_A0->CCTL[2] = TIMER_A_CCTLN_SCS;           //synchronos capture
+    TIMER_A0->CCTL[2] |= TIMER_A_CCTLN_CM_1;          //Capture rising edge
+    TIMER_A0->CCTL[2] |= TIMER_A_CCTLN_CCIS_0;        //CCI2A
+    TIMER_A0->CCTL[2] |= TIMER_A_CCTLN_CCIE;          //Capture interrupt
+    TIMER_A0->CCTL[2] |= TIMER_A_CCTLN_CAP;           //capture mode
+    TIMER_A0->CCTL[2] | TIMER_A_CCTLN_SCS;           //synchronos capture
 }
 void port2_5_init()
 {
@@ -103,9 +104,10 @@ void TA0_N_IRQHandler()                             //TA0 ISR
     currentedge = TIMER_A0->CCR[2];
     period      = currentedge-lastedge;
     lastedge    = currentedge;
-    if((35635 < period)&&(period < 39375))
-        detect10Hz = 1;
-    TIMER_A0->CCTL[2] &= ~(TIMER_A_CCTLN_CCIFG);
+   // if((35600 <= period)&&(period <= 39500))
+        //P4->OUT ^= 0x01;
+    detect10Hz = 1;
+    TIMER_A0->CCTL[2] &= ~1;                    //Reclear flag to ensure it is not tripped during execution
 }
 void timerA0_1_init()
 {
@@ -118,12 +120,12 @@ void timerA0_1_init()
      * Returns:
      *          VOID
      */
-    TIMER_A0->CTL    |= TIMER_A_CTL_SSEL__SMCLK;         //up counting with SMCLK
+    TIMER_A0->CTL    |= TIMER_A_CTL_SSEL__SMCLK;                                            //up counting with SMCLK
     TIMER_A0->CTL    |= TIMER_A_CTL_MC__UP;
     TIMER_A0->CTL    |= TIMER_A_CTL_ID_3;                                                   // x/8, 375KHz
-    TIMER_A0->CTL    |= TIMER_A_CTL_CLR;                                                     //Clear TA0R
+    TIMER_A0->CTL    |= TIMER_A_CTL_CLR;                                                    //Clear TA0R
     TIMER_A0->CCR[0] = 37537;                                                               //10 Hz period
-    TIMER_A0->CCR[1] = 37537/2;                                                               //Turn on the signal every 0.1s or 10Hz
+    TIMER_A0->CCR[1] = 37537/2;                                                             //Turn on the signal every 0.1s or 10Hz
     TIMER_A0->CCTL[1]= TIMER_A_CCTLN_OUTMOD_7;                                              //Output mode reset/set
 }
 void port2_4_init()
